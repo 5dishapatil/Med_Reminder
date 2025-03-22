@@ -104,7 +104,9 @@
   </div>
 
   <script>
-    // Global reminders state shared by both views
+    // Global reminders state shared by both views.
+    // Each reminder includes an array of time slots,
+    // where each time slot is an object: { start, end, status }
     let reminders = [];
 
     // DOM elements for both views
@@ -172,7 +174,6 @@
       timeSlotsDiv.appendChild(timeSlotDiv);
     }
 
-    // Attach event for "Add Time Slot" button
     addTimeSlotBtn.addEventListener('click', addTimeSlot);
 
     // Caregiver: handle form submission to set a new reminder
@@ -184,7 +185,7 @@
       const pillCount = document.getElementById('pillCount').value;
       const frequency = document.getElementById('frequency').value;
       
-      // Gather all time slots from the dynamic container
+      // Gather all time slots from the dynamic container and add a status field
       const timeSlotElements = document.querySelectorAll('.time-slot');
       let timeSlots = [];
       for (const slot of timeSlotElements) {
@@ -194,17 +195,17 @@
           alert("Please fill in all time slot fields.");
           return;
         }
-        timeSlots.push({ start, end });
+        // Each time slot now includes its own status.
+        timeSlots.push({ start, end, status: "pending" });
       }
 
-      // Create reminder object with a unique id and default status "pending"
+      // Create reminder object with a unique id.
       const reminder = {
         id: Date.now(),
         medicineName,
         pillCount,
         frequency,
-        timeSlots, // array of {start, end}
-        status: "pending" // statuses: pending, taken, missed
+        timeSlots, // array of {start, end, status}
       };
 
       reminders.push(reminder);
@@ -214,28 +215,40 @@
       // Clear dynamic time slots and add one default slot back
       timeSlotsDiv.innerHTML = "";
       addTimeSlot();
-
-      // For demo: simulate a check for a missed dose after 10 seconds.
-      setTimeout(() => {
-        // Only mark as missed if still pending.
-        if (reminder.status === "pending") {
-          reminder.status = "missed";
-          // Alert caregiver (in a real app, this could be a push notification)
-          alert(`Alert for Caregiver: Medicine missed - ${reminder.medicineName}`);
-          updateViews();
-        }
-      }, 10000);
     });
+
+    // Helper function: compares current time with an end time ("HH:MM")
+    function isPast(endTime) {
+      const now = new Date();
+      const [endHour, endMinute] = endTime.split(':').map(Number);
+      if (now.getHours() > endHour || (now.getHours() === endHour && now.getMinutes() > endMinute)) {
+        return true;
+      }
+      return false;
+    }
+
+    // Check for missed time slots periodically (every 10 seconds for demo)
+    setInterval(() => {
+      reminders.forEach(reminder => {
+        reminder.timeSlots.forEach((slot, index) => {
+          if (slot.status === "pending" && isPast(slot.end)) {
+            // Mark as missed only once
+            slot.status = "missed";
+            alert(`Alert for Caregiver: Medicine "${reminder.medicineName}" missed for time slot ${slot.start} - ${slot.end}`);
+          }
+        });
+      });
+      updateViews();
+    }, 10000);
 
     // Update both caregiver and elder views based on reminders state
     function updateViews() {
-      // Caregiver view: display reminder details without action buttons
+      // Caregiver view: display reminder details with each time slot's status
       if (reminders.length === 0) {
         caregiverRemindersDiv.innerHTML = '<p class="text-gray-500">No reminders set yet.</p>';
       } else {
         caregiverRemindersDiv.innerHTML = reminders.map(reminder => {
-          // Build a list of time slots display
-          const timeSlotsHTML = reminder.timeSlots.map(slot => `<li>${slot.start} - ${slot.end}</li>`).join('');
+          const timeSlotsHTML = reminder.timeSlots.map(slot => `<li>${slot.start} - ${slot.end} (<span class="font-semibold">${slot.status}</span>)</li>`).join('');
           return `
             <div class="border p-4 rounded mb-4 shadow-sm">
               <h3 class="text-xl font-bold text-gray-800">${reminder.medicineName}</h3>
@@ -244,31 +257,27 @@
               <ul class="list-disc list-inside text-gray-600">
                 ${timeSlotsHTML}
               </ul>
-              <p class="text-sm text-gray-500">Status: ${reminder.status}</p>
             </div>
           `;
         }).join('');
       }
 
-      // Elder view: display reminders with action buttons if pending
+      // Elder view: display reminders with action buttons for pending time slots
       if (reminders.length === 0) {
         elderRemindersDiv.innerHTML = '<p class="text-gray-500">No reminders available at the moment.</p>';
       } else {
         elderRemindersDiv.innerHTML = reminders.map(reminder => {
-          const timeSlotsHTML = reminder.timeSlots.map(slot => `<li>${slot.start} - ${slot.end}</li>`).join('');
-          let actions = '';
-          if (reminder.status === "pending") {
-            actions = `
-              <div class="mt-2 space-x-2">
-                <button class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600" onclick="markTaken(${reminder.id})">
-                  Taken
-                </button>
-                <button class="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600" onclick="markNotYet(${reminder.id})">
-                  Not Yet
-                </button>
-              </div>
-            `;
-          }
+          const timeSlotsHTML = reminder.timeSlots.map((slot, idx) => {
+            let actions = "";
+            if (slot.status === "pending") {
+              actions = `<button class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600" onclick="markTaken(${reminder.id}, ${idx})">
+                           Mark as Taken
+                         </button>`;
+            }
+            return `<li>
+                      ${slot.start} - ${slot.end} (<span class="font-semibold">${slot.status}</span>) ${actions}
+                    </li>`;
+          }).join('');
           return `
             <div class="border p-4 rounded mb-4 shadow-sm">
               <h3 class="text-xl font-bold text-gray-800">${reminder.medicineName}</h3>
@@ -276,39 +285,25 @@
               <ul class="list-disc list-inside text-gray-600">
                 ${timeSlotsHTML}
               </ul>
-              <p class="text-sm text-gray-500">Status: ${reminder.status}</p>
-              ${actions}
             </div>
           `;
         }).join('');
       }
     }
 
-    // Elder actions: mark medicine as taken
-    function markTaken(id) {
+    // Elder action: mark a specific time slot as taken
+    function markTaken(reminderId, timeslotIndex) {
       reminders = reminders.map(reminder => {
-        if (reminder.id === id) {
-          reminder.status = "taken";
+        if (reminder.id === reminderId) {
+          reminder.timeSlots[timeslotIndex].status = "taken";
         }
         return reminder;
       });
       updateViews();
     }
 
-    // Elder actions: mark medicine as still pending (not taken yet)
-    function markNotYet(id) {
-      reminders = reminders.map(reminder => {
-        if (reminder.id === id) {
-          reminder.status = "pending";
-        }
-        return reminder;
-      });
-      updateViews();
-    }
-
-    // Expose elder actions to global scope
+    // Expose the elder action to global scope
     window.markTaken = markTaken;
-    window.markNotYet = markNotYet;
 
     // Add one default time slot on page load
     addTimeSlot();
