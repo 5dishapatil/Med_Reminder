@@ -34,14 +34,14 @@
             <label for="medicineName" class="block text-gray-600 font-medium">
               Medicine Name
             </label>
-            <input type="text" id="medicineName" name="medicineName" placeholder="e.g. Paracetamol 500 mg" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+            <input type="text" id="medicineName" name="medicineName" placeholder="e.g. Paracetamol" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
           </div>
-          <!-- Dosage -->
+          <!-- Number of Pills -->
           <div>
-            <label for="dosage" class="block text-gray-600 font-medium">
-              Dosage
+            <label for="pillCount" class="block text-gray-600 font-medium">
+              Number of Pills
             </label>
-            <input type="text" id="dosage" name="dosage" placeholder="e.g. 500 mg" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+            <input type="number" id="pillCount" name="pillCount" placeholder="e.g. 2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" min="1" />
           </div>
           <!-- Frequency -->
           <div>
@@ -143,7 +143,7 @@
 
       // Gather form data
       const medicineName = document.getElementById('medicineName').value;
-      const dosage = document.getElementById('dosage').value;
+      const pillCount = document.getElementById('pillCount').value;
       const frequency = document.getElementById('frequency').value;
       const morningStart = document.getElementById('morningStart').value;
       const morningEnd = document.getElementById('morningEnd').value;
@@ -151,7 +151,7 @@
       const dinnerEnd = document.getElementById('dinnerEnd').value;
 
       // Validate input
-      if (!medicineName || !dosage || !frequency || !morningStart || !morningEnd || !dinnerStart || !dinnerEnd) {
+      if (!medicineName || !pillCount || !frequency || !morningStart || !morningEnd || !dinnerStart || !dinnerEnd) {
         alert("Please fill in all fields.");
         return;
       }
@@ -160,7 +160,7 @@
       const reminder = {
         id: Date.now(),
         medicineName,
-        dosage,
+        pillCount,
         frequency,
         morning: { start: morningStart, end: morningEnd },
         dinner: { start: dinnerStart, end: dinnerEnd },
@@ -193,7 +193,7 @@
           return `
             <div class="border p-4 rounded mb-4 shadow-sm">
               <h3 class="text-xl font-bold text-gray-800">${reminder.medicineName}</h3>
-              <p class="text-gray-600">Dosage: ${reminder.dosage}</p>
+              <p class="text-gray-600">Number of Pills: ${reminder.pillCount}</p>
               <p class="text-gray-600">Frequency: ${reminder.frequency} day(s)</p>
               <p class="text-gray-600">Morning: ${reminder.morning.start} - ${reminder.morning.end}</p>
               <p class="text-gray-600">After Dinner: ${reminder.dinner.start} - ${reminder.dinner.end}</p>
@@ -225,7 +225,7 @@
           return `
             <div class="border p-4 rounded mb-4 shadow-sm">
               <h3 class="text-xl font-bold text-gray-800">${reminder.medicineName}</h3>
-              <p class="text-gray-600">Dosage: ${reminder.dosage}</p>
+              <p class="text-gray-600">Number of Pills: ${reminder.pillCount}</p>
               <p class="text-gray-600">Time Slots: Morning (${reminder.morning.start} - ${reminder.morning.end}), After Dinner (${reminder.dinner.start} - ${reminder.dinner.end})</p>
               <p class="text-sm text-gray-500">Status: ${reminder.status}</p>
               ${actions}
