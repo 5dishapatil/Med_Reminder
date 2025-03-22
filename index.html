@@ -225,12 +225,19 @@
           alert("End time must be after start time.");
           return;
         }
+        // Calculate interval for 3 alarms
         let interval = Math.floor(duration / 3);
         if (interval <= 0) interval = 1;
+        // Define a buffer (in minutes) for the last alarm so it fires before the end.
+        const buffer = 5;
+        // Set the third alarm time to be a little before the end time if possible.
+        let thirdAlarm = (endM - buffer > startM + interval * 2) 
+                         ? (endM - buffer) 
+                         : (startM + interval * 2);
         const alarmTimes = [
           startM + interval,
           startM + interval * 2,
-          endM
+          thirdAlarm
         ];
         const alarmsTriggered = [false, false, false];
         timeSlots.push({ start, end, status: "pending", alarmTimes, alarmsTriggered });
@@ -332,7 +339,6 @@
       reminders = reminders.map(reminder => {
         if (reminder.id === reminderId) {
           const currentStatus = reminder.timeSlots[timeslotIndex].status;
-          // If the slot was already missed, mark it as "taken medicine post time slot"
           if (currentStatus === "missed") {
             reminder.timeSlots[timeslotIndex].status = "taken medicine post time slot";
           } else {
