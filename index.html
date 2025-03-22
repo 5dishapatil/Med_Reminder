@@ -200,6 +200,21 @@
       return h * 60 + m;
     }
 
+    // Helper: format delay in minutes to a human-friendly string.
+    function formatDelay(delayMinutes) {
+      if (delayMinutes < 60) {
+        return `${delayMinutes} minute${delayMinutes === 1 ? '' : 's'} after`;
+      } else {
+        const hours = Math.floor(delayMinutes / 60);
+        const minutes = delayMinutes % 60;
+        let result = `${hours} hour${hours === 1 ? '' : 's'}`;
+        if (minutes > 0) {
+          result += ` ${minutes} minute${minutes === 1 ? '' : 's'}`;
+        }
+        return result + " after";
+      }
+    }
+
     // Caregiver: handle form submission to set a new reminder
     caregiverForm.addEventListener('submit', function(e) {
       e.preventDefault();
@@ -228,9 +243,8 @@
         // Calculate interval for 3 alarms
         let interval = Math.floor(duration / 3);
         if (interval <= 0) interval = 1;
-        // Define a buffer (in minutes) for the last alarm so it fires before the end.
+        // Define a buffer (5 minutes) for the last alarm so it fires before the end.
         const buffer = 5;
-        // Set the third alarm time to be a little before the end time if possible.
         let thirdAlarm = (endM - buffer > startM + interval * 2) 
                          ? (endM - buffer) 
                          : (startM + interval * 2);
@@ -312,7 +326,7 @@
         elderRemindersDiv.innerHTML = reminders.map(reminder => {
           const timeSlotsHTML = reminder.timeSlots.map((slot, idx) => {
             let actions = "";
-            if (slot.status === "pending" || slot.status === "missed" || slot.status === "taken medicine post time slot") {
+            if (slot.status === "pending" || slot.status === "missed" || slot.status.startsWith("taken medicine post time slot")) {
               actions = `<button class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600" onclick="markTaken(${reminder.id}, ${idx})">
                            Mark as Taken
                          </button>`;
@@ -338,11 +352,17 @@
     function markTaken(reminderId, timeslotIndex) {
       reminders = reminders.map(reminder => {
         if (reminder.id === reminderId) {
-          const currentStatus = reminder.timeSlots[timeslotIndex].status;
-          if (currentStatus === "missed") {
-            reminder.timeSlots[timeslotIndex].status = "taken medicine post time slot";
+          const slot = reminder.timeSlots[timeslotIndex];
+          if (slot.status === "missed") {
+            // Calculate delay since the end of the time slot.
+            const now = new Date();
+            const currentMinutes = now.getHours() * 60 + now.getMinutes();
+            const slotEndMinutes = timeToMinutes(slot.end);
+            const delayMinutes = currentMinutes - slotEndMinutes;
+            const delayString = formatDelay(delayMinutes);
+            slot.status = `taken medicine post time slot (${delayString})`;
           } else {
-            reminder.timeSlots[timeslotIndex].status = "taken";
+            slot.status = "taken";
           }
         }
         return reminder;
