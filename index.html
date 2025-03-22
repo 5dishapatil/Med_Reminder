@@ -36,19 +36,24 @@
             </label>
             <input type="text" id="medicineName" name="medicineName" placeholder="e.g. Paracetamol" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required />
           </div>
-          <!-- Number of Pills -->
+          <!-- Pills per Dose -->
           <div>
             <label for="pillCount" class="block text-gray-600 font-medium">
-              Number of Pills
+              Pills per Dose
             </label>
             <input type="number" id="pillCount" name="pillCount" placeholder="e.g. 2 pills" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" min="1" required />
           </div>
-          <!-- Frequency -->
+          <!-- Frequency or Lifetime -->
           <div>
             <label for="frequency" class="block text-gray-600 font-medium">
               Frequency (Days)
             </label>
-            <input type="number" id="frequency" name="frequency" min="1" max="30" value="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required />
+            <input type="number" id="frequency" name="frequency" min="1" max="365" value="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required />
+          </div>
+          <div>
+            <label class="block text-gray-600 font-medium">
+              <input type="checkbox" id="lifetime" class="mr-2"> Lifetime Medication
+            </label>
           </div>
           <!-- Time Slots Section -->
           <div>
@@ -106,13 +111,16 @@
   <script>
     // Global reminders state shared by both views.
     // Each reminder includes an array of time slots,
-    // where each time slot is an object: { start, end, status }
+    // where each time slot is an object:
+    // { start, end, status, alarmTimes: [a1,a2,a3], alarmsTriggered: [bool, bool, bool] }
     let reminders = [];
 
     // DOM elements for both views
     const caregiverForm = document.getElementById('medicineForm');
     const caregiverRemindersDiv = document.getElementById('caregiverReminders');
     const elderRemindersDiv = document.getElementById('elderReminders');
+    const frequencyInput = document.getElementById('frequency');
+    const lifetimeCheckbox = document.getElementById('lifetime');
 
     // Tab navigation elements
     const caregiverTab = document.getElementById('caregiverTab');
@@ -135,11 +143,21 @@
       caregiverTab.classList.remove('bg-blue-700');
     });
 
+    // Handle Lifetime checkbox behavior
+    lifetimeCheckbox.addEventListener('change', function() {
+      if (this.checked) {
+        frequencyInput.value = "Life";
+        frequencyInput.disabled = true;
+      } else {
+        frequencyInput.value = 3;
+        frequencyInput.disabled = false;
+      }
+    });
+
     // Dynamic Time Slot Addition
     const timeSlotsDiv = document.getElementById('timeSlots');
     const addTimeSlotBtn = document.getElementById('addTimeSlot');
 
-    // Function to add a new time slot block
     function addTimeSlot() {
       const timeSlotDiv = document.createElement('div');
       timeSlotDiv.classList.add('flex', 'space-x-2', 'items-center', 'time-slot');
@@ -176,16 +194,21 @@
 
     addTimeSlotBtn.addEventListener('click', addTimeSlot);
 
+    // Helper: convert HH:MM to minutes from midnight
+    function timeToMinutes(timeStr) {
+      const [h, m] = timeStr.split(':').map(Number);
+      return h * 60 + m;
+    }
+
     // Caregiver: handle form submission to set a new reminder
     caregiverForm.addEventListener('submit', function(e) {
       e.preventDefault();
 
-      // Gather form data
       const medicineName = document.getElementById('medicineName').value;
       const pillCount = document.getElementById('pillCount').value;
-      const frequency = document.getElementById('frequency').value;
+      const frequency = lifetimeCheckbox.checked ? "Life" : frequencyInput.value;
       
-      // Gather all time slots from the dynamic container and add a status field
+      // Process time slots and compute alarm times
       const timeSlotElements = document.querySelectorAll('.time-slot');
       let timeSlots = [];
       for (const slot of timeSlotElements) {
@@ -195,65 +218,88 @@
           alert("Please fill in all time slot fields.");
           return;
         }
-        // Each time slot now includes its own status.
-        timeSlots.push({ start, end, status: "pending" });
+        // Compute start and end in minutes
+        const startM = timeToMinutes(start);
+        const endM = timeToMinutes(end);
+        let duration = endM - startM;
+        if (duration <= 0) {
+          alert("End time must be after start time.");
+          return;
+        }
+        // Calculate alarm interval so that there are 3 alarms in the slot.
+        let interval = Math.floor(duration / 3);
+        if (interval <= 0) interval = 1; // at least 1 minute interval
+        // Alarm times (in minutes from midnight)
+        const alarmTimes = [
+          startM + interval,
+          startM + interval * 2,
+          endM // final alarm at the end time
+        ];
+        // Initialize alarmsTriggered array for each alarm.
+        const alarmsTriggered = [false, false, false];
+        timeSlots.push({ start, end, status: "pending", alarmTimes, alarmsTriggered });
       }
 
-      // Create reminder object with a unique id.
+      // Create reminder object.
       const reminder = {
         id: Date.now(),
         medicineName,
         pillCount,
         frequency,
-        timeSlots, // array of {start, end, status}
+        timeSlots, // each has alarmTimes and alarmsTriggered
       };
 
       reminders.push(reminder);
       updateViews();
       caregiverForm.reset();
-
-      // Clear dynamic time slots and add one default slot back
+      frequencyInput.disabled = false;
+      lifetimeCheckbox.checked = false;
       timeSlotsDiv.innerHTML = "";
       addTimeSlot();
     });
 
-    // Helper function: compares current time with an end time ("HH:MM")
-    function isPast(endTime) {
-      const now = new Date();
-      const [endHour, endMinute] = endTime.split(':').map(Number);
-      if (now.getHours() > endHour || (now.getHours() === endHour && now.getMinutes() > endMinute)) {
-        return true;
-      }
-      return false;
-    }
-
-    // Check for missed time slots periodically (every 10 seconds for demo)
+    // Periodic check for alarms and missed time slots (every 10 seconds for demo)
     setInterval(() => {
+      const now = new Date();
+      const currentMinutes = now.getHours() * 60 + now.getMinutes();
       reminders.forEach(reminder => {
-        reminder.timeSlots.forEach((slot, index) => {
-          if (slot.status === "pending" && isPast(slot.end)) {
-            // Mark as missed only once
-            slot.status = "missed";
-            alert(`Alert for Caregiver: Medicine "${reminder.medicineName}" missed for time slot ${slot.start} - ${slot.end}`);
+        reminder.timeSlots.forEach(slot => {
+          // Only check if the medicine for this slot hasn't been logged as taken.
+          if (slot.status === "pending") {
+            // Check each alarm time.
+            slot.alarmTimes.forEach((alarmTime, index) => {
+              if (!slot.alarmsTriggered[index] && currentMinutes >= alarmTime) {
+                // Trigger an alarm reminder for the elder.
+                alert(`Reminder for Elder: Time to take ${reminder.medicineName} (${slot.start} - ${slot.end}) [Alarm ${index+1}]`);
+                slot.alarmsTriggered[index] = true;
+              }
+            });
+            // If current time is past the slot's end time and still pending, mark as missed.
+            if (currentMinutes >= timeToMinutes(slot.end)) {
+              slot.status = "missed";
+              alert(`Alert for Caregiver: Medicine "${reminder.medicineName}" missed for time slot ${slot.start} - ${slot.end}`);
+            }
           }
         });
       });
       updateViews();
     }, 10000);
 
-    // Update both caregiver and elder views based on reminders state
+    // Update both views based on reminders state.
     function updateViews() {
-      // Caregiver view: display reminder details with each time slot's status
+      // Caregiver view
       if (reminders.length === 0) {
         caregiverRemindersDiv.innerHTML = '<p class="text-gray-500">No reminders set yet.</p>';
       } else {
         caregiverRemindersDiv.innerHTML = reminders.map(reminder => {
-          const timeSlotsHTML = reminder.timeSlots.map(slot => `<li>${slot.start} - ${slot.end} (<span class="font-semibold">${slot.status}</span>)</li>`).join('');
+          const timeSlotsHTML = reminder.timeSlots.map(slot => `
+            <li>${slot.start} - ${slot.end} (<span class="font-semibold">${slot.status}</span>)</li>
+          `).join('');
           return `
             <div class="border p-4 rounded mb-4 shadow-sm">
               <h3 class="text-xl font-bold text-gray-800">${reminder.medicineName}</h3>
-              <p class="text-gray-600">Number of Pills: ${reminder.pillCount}</p>
-              <p class="text-gray-600">Frequency: ${reminder.frequency} day(s)</p>
+              <p class="text-gray-600">Pills per Dose: ${reminder.pillCount}</p>
+              <p class="text-gray-600">Frequency: ${reminder.frequency === "Life" ? "Lifetime" : reminder.frequency + " day(s)"}</p>
               <ul class="list-disc list-inside text-gray-600">
                 ${timeSlotsHTML}
               </ul>
@@ -261,15 +307,14 @@
           `;
         }).join('');
       }
-
-      // Elder view: display reminders with action buttons for pending time slots
+      // Elder view
       if (reminders.length === 0) {
         elderRemindersDiv.innerHTML = '<p class="text-gray-500">No reminders available at the moment.</p>';
       } else {
         elderRemindersDiv.innerHTML = reminders.map(reminder => {
           const timeSlotsHTML = reminder.timeSlots.map((slot, idx) => {
             let actions = "";
-            if (slot.status === "pending") {
+            if (slot.status === "pending" || slot.status === "missed") {
               actions = `<button class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600" onclick="markTaken(${reminder.id}, ${idx})">
                            Mark as Taken
                          </button>`;
@@ -281,7 +326,7 @@
           return `
             <div class="border p-4 rounded mb-4 shadow-sm">
               <h3 class="text-xl font-bold text-gray-800">${reminder.medicineName}</h3>
-              <p class="text-gray-600">Number of Pills: ${reminder.pillCount}</p>
+              <p class="text-gray-600">Pills per Dose: ${reminder.pillCount}</p>
               <ul class="list-disc list-inside text-gray-600">
                 ${timeSlotsHTML}
               </ul>
@@ -291,7 +336,7 @@
       }
     }
 
-    // Elder action: mark a specific time slot as taken
+    // Elder action: mark a specific time slot as taken.
     function markTaken(reminderId, timeslotIndex) {
       reminders = reminders.map(reminder => {
         if (reminder.id === reminderId) {
@@ -302,10 +347,10 @@
       updateViews();
     }
 
-    // Expose the elder action to global scope
+    // Expose the elder action globally.
     window.markTaken = markTaken;
 
-    // Add one default time slot on page load
+    // Add one default time slot on page load.
     addTimeSlot();
   </script>
 </body>
