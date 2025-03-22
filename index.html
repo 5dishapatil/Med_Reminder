@@ -5,93 +5,50 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Eldora - Medicine Reminder</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    /* Main background using a fresh, soft gradient ("Horizon" from WebGradients) */
-    body {
-      background-image: linear-gradient(to right, #a1c4fd, #c2e9fb);
-      font-family: 'Inter', sans-serif;
-    }
-    /* Appbar with a complementary deep blue gradient */
-    nav {
-      background-image: linear-gradient(to right, #1e3c72, #2a5298);
-    }
-    .nav-btn {
-      background-color: transparent;
-      color: white;
-      border: 1px solid rgba(255,255,255,0.5);
-    }
-    .nav-btn:hover {
-      background-color: rgba(255,255,255,0.2);
-    }
-    /* Primary Button Styles: darker pastel blue */
-    .btn-primary {
-      background-color: #4a90e2;
-      color: white;
-    }
-    .btn-primary:hover {
-      background-color: #3a78c2;
-    }
-    /* Card Style for Medicine Reminder: slightly off white */
-    .card {
-      background: #f7f7f7;
-      border-radius: 0.5rem;
-      box-shadow: 0 10px 15px rgba(0,0,0,0.1);
-    }
-    /* Increase input size and use card background color for inputs */
-    input[type="text"],
-    input[type="number"],
-    input[type="time"] {
-      background-color: #f7f7f7;
-      padding: 0.75rem 1rem;
-      font-size: 1rem;
-    }
-    .nav-btn:focus {
-      outline: none;
-    }
-  </style>
 </head>
-<body class="min-h-screen">
+<body class="bg-gray-100 font-sans">
   <!-- Navigation Tabs -->
-  <nav class="p-4">
+  <nav class="bg-blue-600 p-4">
     <div class="max-w-4xl mx-auto flex justify-center space-x-4">
-      <button id="caregiverTab" class="nav-btn text-white font-semibold px-6 py-2 rounded shadow-lg">Caregiver</button>
-      <button id="elderTab" class="nav-btn text-white font-semibold px-6 py-2 rounded shadow-lg">Elder</button>
+      <button id="caregiverTab" class="text-white font-semibold px-4 py-2 rounded bg-blue-700">Caregiver</button>
+      <button id="elderTab" class="text-white font-semibold px-4 py-2 rounded hover:bg-blue-500">Elder</button>
     </div>
   </nav>
 
   <div class="max-w-4xl mx-auto p-6">
     <!-- Caregiver View -->
     <section id="caregiverView" class="mt-6">
-      <header class="mb-8 text-center">
-        <h1 class="text-4xl font-bold text-gray-800">Eldora - Caregiver Dashboard</h1>
+      <header class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-800 text-center">
+          Eldora - Caregiver Dashboard
+        </h1>
       </header>
       <!-- Medicine Reminder Form -->
-      <div class="card p-6 mb-8">
-        <h2 class="text-2xl font-semibold text-gray-700 mb-4 border-b pb-2">Set Medicine Reminder</h2>
+      <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+        <h2 class="text-2xl font-semibold text-gray-700 mb-4">
+          Set Medicine Reminder
+        </h2>
         <form id="medicineForm" class="space-y-4">
           <!-- Medicine Name -->
           <div>
-            <label for="medicineName" class="block text-gray-600 font-medium">Medicine Name</label>
-            <input type="text" id="medicineName" name="medicineName" placeholder="e.g. Paracetamol" required />
+            <label for="medicineName" class="block text-gray-600 font-medium">
+              Medicine Name
+            </label>
+            <input type="text" id="medicineName" name="medicineName" placeholder="e.g. Paracetamol" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required />
           </div>
           <!-- Pills per Dose -->
           <div>
-            <label for="pillCount" class="block text-gray-600 font-medium">Pills per Dose</label>
-            <input type="number" id="pillCount" name="pillCount" placeholder="e.g. 2 pills" min="1" required />
+            <label for="pillCount" class="block text-gray-600 font-medium">
+              Pills per Dose
+            </label>
+            <input type="number" id="pillCount" name="pillCount" placeholder="e.g. 2 pills" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" min="1" required />
           </div>
-          <!-- Frequency (Months and Days) or Lifetime -->
+          <!-- Frequency or Lifetime -->
           <div>
-            <label class="block text-gray-600 font-medium">Frequency:</label>
-            <div class="flex space-x-2 mt-1">
-              <div class="w-1/2">
-                <input type="number" id="freqMonths" name="freqMonths" placeholder="Months" min="0" value="0" required />
-                <p class="text-xs text-gray-500 mt-1">Months</p>
-              </div>
-              <div class="w-1/2">
-                <input type="number" id="freqDays" name="freqDays" placeholder="Days" min="0" value="3" required />
-                <p class="text-xs text-gray-500 mt-1">Days</p>
-              </div>
-            </div>
+            <label for="frequency" class="block text-gray-600 font-medium">
+              Frequency (Days)
+            </label>
+            <input type="number" id="frequency" name="frequency" min="1" max="365" value="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required />
           </div>
           <div>
             <label class="block text-gray-600 font-medium">
@@ -100,23 +57,32 @@
           </div>
           <!-- Time Slots Section -->
           <div>
-            <label class="block text-gray-600 font-medium mb-2">Set Alarm Time(s)</label>
+            <label class="block text-gray-600 font-medium mb-2">
+              Set Alarm Time(s)
+            </label>
             <div id="timeSlots" class="space-y-2">
+              <!-- A default time slot is added automatically -->
               <div class="flex space-x-2 items-center time-slot">
-                <input type="time" class="startTime" required />
-                <span class="self-center text-gray-600">to</span>
-                <input type="time" class="endTime" required />
+                <input type="time" class="startTime rounded-md border-gray-300 shadow-sm" required />
+                <span class="self-center">to</span>
+                <input type="time" class="endTime rounded-md border-gray-300 shadow-sm" required />
                 <button type="button" class="removeTimeSlot bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">Remove</button>
               </div>
             </div>
-            <button type="button" id="addTimeSlot" class="mt-2 btn-primary px-4 py-2 rounded shadow">Add Time Slot</button>
+            <button type="button" id="addTimeSlot" class="mt-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+              Add Time Slot
+            </button>
           </div>
-          <button type="submit" class="btn-primary px-4 py-2 rounded shadow-lg w-full">Set Reminder</button>
+          <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+            Set Reminder
+          </button>
         </form>
       </div>
-      <!-- Active Reminders List for Caregiver -->
-      <div class="card p-6">
-        <h2 class="text-2xl font-semibold text-gray-700 mb-4 border-b pb-2">Active Medicine Reminders</h2>
+      <!-- List of Active Reminders for Caregiver -->
+      <div class="bg-white p-6 rounded-lg shadow-md">
+        <h2 class="text-2xl font-semibold text-gray-700 mb-4">
+          Active Medicine Reminders
+        </h2>
         <div id="caregiverReminders">
           <p class="text-gray-500">No reminders set yet.</p>
         </div>
@@ -125,11 +91,16 @@
 
     <!-- Elder View -->
     <section id="elderView" class="mt-6 hidden">
-      <header class="mb-8 text-center">
-        <h1 class="text-4xl font-bold text-gray-800">Eldora - Elder Dashboard</h1>
+      <header class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-800 text-center">
+          Eldora - Elder Dashboard
+        </h1>
       </header>
-      <div class="card p-6">
-        <h2 class="text-2xl font-semibold text-gray-700 mb-4 border-b pb-2">Your Medicine Reminders</h2>
+      <!-- Reminders Notification List for Elder -->
+      <div class="bg-white p-6 rounded-lg shadow-md">
+        <h2 class="text-2xl font-semibold text-gray-700 mb-4">
+          Your Medicine Reminders
+        </h2>
         <div id="elderReminders">
           <p class="text-gray-500">No reminders available at the moment.</p>
         </div>
@@ -138,37 +109,33 @@
   </div>
 
   <script>
-    // Helper: Convert total days into "X months Y days" format.
-    function formatFrequency(days) {
-      let d = parseInt(days, 10);
-      if (isNaN(d)) return days;
-      let months = Math.floor(d / 30);
-      let remainder = d % 30;
-      if (months > 0 && remainder === 0) { remainder = 15; }
-      return `${months} month${months === 1 ? '' : 's'} ${remainder} day${remainder === 1 ? '' : 's'}`;
-    }
-
-    // Global reminders state.
+    // Global reminders state shared by both views.
+    // Each reminder includes an array of time slots,
+    // where each time slot is an object:
+    // { start, end, status, alarmTimes: [a1, a2, a3], alarmsTriggered: [bool, bool, bool] }
     let reminders = [];
 
-    // DOM elements for views.
+    // DOM elements for both views
     const caregiverForm = document.getElementById('medicineForm');
     const caregiverRemindersDiv = document.getElementById('caregiverReminders');
     const elderRemindersDiv = document.getElementById('elderReminders');
+    const frequencyInput = document.getElementById('frequency');
     const lifetimeCheckbox = document.getElementById('lifetime');
 
-    // Tab navigation.
+    // Tab navigation elements
     const caregiverTab = document.getElementById('caregiverTab');
     const elderTab = document.getElementById('elderTab');
     const caregiverView = document.getElementById('caregiverView');
     const elderView = document.getElementById('elderView');
 
+    // Tab switching logic
     caregiverTab.addEventListener('click', () => {
       caregiverView.classList.remove('hidden');
       elderView.classList.add('hidden');
       caregiverTab.classList.add('bg-blue-700');
       elderTab.classList.remove('bg-blue-700');
     });
+
     elderTab.addEventListener('click', () => {
       elderView.classList.remove('hidden');
       caregiverView.classList.add('hidden');
@@ -176,95 +143,138 @@
       caregiverTab.classList.remove('bg-blue-700');
     });
 
+    // Handle Lifetime checkbox behavior
     lifetimeCheckbox.addEventListener('change', function() {
       if (this.checked) {
-        document.getElementById('freqMonths').disabled = true;
-        document.getElementById('freqDays').disabled = true;
+        frequencyInput.value = "Life";
+        frequencyInput.disabled = true;
       } else {
-        document.getElementById('freqMonths').disabled = false;
-        document.getElementById('freqDays').disabled = false;
+        frequencyInput.value = 3;
+        frequencyInput.disabled = false;
       }
     });
 
-    // Dynamic Time Slot Addition.
+    // Dynamic Time Slot Addition
     const timeSlotsDiv = document.getElementById('timeSlots');
     const addTimeSlotBtn = document.getElementById('addTimeSlot');
+
     function addTimeSlot() {
       const timeSlotDiv = document.createElement('div');
       timeSlotDiv.classList.add('flex', 'space-x-2', 'items-center', 'time-slot');
+
       const startInput = document.createElement('input');
       startInput.type = 'time';
       startInput.required = true;
-      startInput.className = 'startTime rounded-md border-gray-300 shadow-sm focus:ring-blue-500';
+      startInput.className = 'startTime rounded-md border-gray-300 shadow-sm';
+
       const span = document.createElement('span');
       span.textContent = "to";
-      span.classList.add('self-center', 'text-gray-600');
+      span.classList.add('self-center');
+
       const endInput = document.createElement('input');
       endInput.type = 'time';
       endInput.required = true;
-      endInput.className = 'endTime rounded-md border-gray-300 shadow-sm focus:ring-blue-500';
+      endInput.className = 'endTime rounded-md border-gray-300 shadow-sm';
+
       const removeBtn = document.createElement('button');
       removeBtn.type = 'button';
       removeBtn.textContent = "Remove";
       removeBtn.className = 'removeTimeSlot bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600';
-      removeBtn.addEventListener('click', () => { timeSlotsDiv.removeChild(timeSlotDiv); });
+      removeBtn.addEventListener('click', () => {
+        timeSlotsDiv.removeChild(timeSlotDiv);
+      });
+
       timeSlotDiv.appendChild(startInput);
       timeSlotDiv.appendChild(span);
       timeSlotDiv.appendChild(endInput);
       timeSlotDiv.appendChild(removeBtn);
+
       timeSlotsDiv.appendChild(timeSlotDiv);
     }
+
     addTimeSlotBtn.addEventListener('click', addTimeSlot);
 
-    // Helper: Convert HH:MM to minutes from midnight.
+    // Helper: convert HH:MM to minutes from midnight
     function timeToMinutes(timeStr) {
       const [h, m] = timeStr.split(':').map(Number);
       return h * 60 + m;
     }
 
-    // Form submission handler.
+    // Helper: format delay in minutes to a human-friendly string.
+    function formatDelay(delayMinutes) {
+      if (delayMinutes < 60) {
+        return `${delayMinutes} minute${delayMinutes === 1 ? '' : 's'} after`;
+      } else {
+        const hours = Math.floor(delayMinutes / 60);
+        const minutes = delayMinutes % 60;
+        let result = `${hours} hour${hours === 1 ? '' : 's'}`;
+        if (minutes > 0) {
+          result += ` ${minutes} minute${minutes === 1 ? '' : 's'}`;
+        }
+        return result + " after";
+      }
+    }
+
+    // Caregiver: handle form submission to set a new reminder
     caregiverForm.addEventListener('submit', function(e) {
       e.preventDefault();
+
       const medicineName = document.getElementById('medicineName').value;
       const pillCount = document.getElementById('pillCount').value;
-      let frequency;
-      if (lifetimeCheckbox.checked) {
-        frequency = "Life";
-      } else {
-        let months = parseInt(document.getElementById('freqMonths').value) || 0;
-        let days = parseInt(document.getElementById('freqDays').value) || 0;
-        frequency = months * 30 + days;
-      }
+      const frequency = lifetimeCheckbox.checked ? "Life" : frequencyInput.value;
+      
+      // Process time slots and compute alarm times
       const timeSlotElements = document.querySelectorAll('.time-slot');
       let timeSlots = [];
       for (const slot of timeSlotElements) {
         const start = slot.querySelector('.startTime').value;
         const end = slot.querySelector('.endTime').value;
-        if (!start || !end) { alert("Please fill in all time slot fields."); return; }
+        if (!start || !end) {
+          alert("Please fill in all time slot fields.");
+          return;
+        }
         const startM = timeToMinutes(start);
         const endM = timeToMinutes(end);
         let duration = endM - startM;
-        if (duration <= 0) { alert("End time must be after start time."); return; }
+        if (duration <= 0) {
+          alert("End time must be after start time.");
+          return;
+        }
+        // Calculate interval for 3 alarms
         let interval = Math.floor(duration / 3);
         if (interval <= 0) interval = 1;
+        // Define a buffer (5 minutes) for the last alarm so it fires before the end.
         const buffer = 5;
-        let thirdAlarm = (endM - buffer > startM + interval * 2) ? (endM - buffer) : (startM + interval * 2);
-        const alarmTimes = [startM + interval, startM + interval * 2, thirdAlarm];
+        let thirdAlarm = (endM - buffer > startM + interval * 2) 
+                         ? (endM - buffer) 
+                         : (startM + interval * 2);
+        const alarmTimes = [
+          startM + interval,
+          startM + interval * 2,
+          thirdAlarm
+        ];
         const alarmsTriggered = [false, false, false];
         timeSlots.push({ start, end, status: "pending", alarmTimes, alarmsTriggered });
       }
-      const reminder = { id: Date.now(), medicineName, pillCount, frequency, timeSlots };
+
+      const reminder = {
+        id: Date.now(),
+        medicineName,
+        pillCount,
+        frequency,
+        timeSlots,
+      };
+
       reminders.push(reminder);
       updateViews();
       caregiverForm.reset();
-      document.getElementById('freqMonths').disabled = false;
-      document.getElementById('freqDays').disabled = false;
+      frequencyInput.disabled = false;
       lifetimeCheckbox.checked = false;
       timeSlotsDiv.innerHTML = "";
       addTimeSlot();
     });
 
-    // Periodic check for alarms and missed time slots.
+    // Periodic check for alarms and missed time slots (every 10 seconds for demo)
     setInterval(() => {
       const now = new Date();
       const currentMinutes = now.getHours() * 60 + now.getMinutes();
@@ -287,53 +297,68 @@
       updateViews();
     }, 10000);
 
-    // Update views based on reminders state.
+    // Update both views based on reminders state.
     function updateViews() {
+      // Caregiver view
       if (reminders.length === 0) {
         caregiverRemindersDiv.innerHTML = '<p class="text-gray-500">No reminders set yet.</p>';
       } else {
         caregiverRemindersDiv.innerHTML = reminders.map(reminder => {
-          const frequencyText = reminder.frequency === "Life" ? "Lifetime" : formatFrequency(reminder.frequency);
           const timeSlotsHTML = reminder.timeSlots.map(slot => `
-            <li>${slot.start} - ${slot.end} (<span class="font-semibold">${slot.status}</span>)</li>`
-          ).join('');
-          return `<div class="card p-4 mb-4">
+            <li>${slot.start} - ${slot.end} (<span class="font-semibold">${slot.status}</span>)</li>
+          `).join('');
+          return `
+            <div class="border p-4 rounded mb-4 shadow-sm">
               <h3 class="text-xl font-bold text-gray-800">${reminder.medicineName}</h3>
               <p class="text-gray-600">Pills per Dose: ${reminder.pillCount}</p>
-              <p class="text-gray-600">Frequency: ${frequencyText}</p>
-              <ul class="list-disc list-inside text-gray-600">${timeSlotsHTML}</ul>
-            </div>`;
+              <p class="text-gray-600">Frequency: ${reminder.frequency === "Life" ? "Lifetime" : reminder.frequency + " day(s)"}</p>
+              <ul class="list-disc list-inside text-gray-600">
+                ${timeSlotsHTML}
+              </ul>
+            </div>
+          `;
         }).join('');
       }
+      // Elder view
       if (reminders.length === 0) {
         elderRemindersDiv.innerHTML = '<p class="text-gray-500">No reminders available at the moment.</p>';
       } else {
         elderRemindersDiv.innerHTML = reminders.map(reminder => {
           const timeSlotsHTML = reminder.timeSlots.map((slot, idx) => {
             let actions = "";
+            // Show the button only if the slot is pending or missed.
             if (slot.status === "pending" || slot.status === "missed") {
-              actions = `<button class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600" onclick="markTaken(${reminder.id}, ${idx})">Mark as Taken</button>`;
+              actions = `<button class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600" onclick="markTaken(${reminder.id}, ${idx})">
+                           Mark as Taken
+                         </button>`;
             }
-            return `<li>${slot.start} - ${slot.end} (<span class="font-semibold">${slot.status}</span>) ${actions}</li>`;
+            return `<li>
+                      ${slot.start} - ${slot.end} (<span class="font-semibold">${slot.status}</span>) ${actions}
+                    </li>`;
           }).join('');
-          return `<div class="card p-4 mb-4">
+          return `
+            <div class="border p-4 rounded mb-4 shadow-sm">
               <h3 class="text-xl font-bold text-gray-800">${reminder.medicineName}</h3>
               <p class="text-gray-600">Pills per Dose: ${reminder.pillCount}</p>
-              <ul class="list-disc list-inside text-gray-600">${timeSlotsHTML}</ul>
-            </div>`;
+              <ul class="list-disc list-inside text-gray-600">
+                ${timeSlotsHTML}
+              </ul>
+            </div>
+          `;
         }).join('');
       }
     }
 
     // Elder action: mark a specific time slot as taken.
     function markTaken(reminderId, timeslotIndex) {
-      console.log(`Marking reminder ${reminderId}, timeslot ${timeslotIndex} as taken.`);
       reminders = reminders.map(reminder => {
         if (reminder.id === reminderId) {
           const slot = reminder.timeSlots[timeslotIndex];
+          // Only update if the slot is pending or missed.
           if (slot.status === "pending") {
             slot.status = "taken";
           } else if (slot.status === "missed") {
+            // Calculate delay since the end of the time slot.
             const now = new Date();
             const currentMinutes = now.getHours() * 60 + now.getMinutes();
             const slotEndMinutes = timeToMinutes(slot.end);
@@ -346,6 +371,7 @@
       });
       updateViews();
     }
+
     window.markTaken = markTaken;
     addTimeSlot();
   </script>
