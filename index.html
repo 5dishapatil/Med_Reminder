@@ -109,6 +109,19 @@
   </div>
 
   <script>
+    // Helper: Convert frequency (in days) to "X months Y days" format.
+    function formatFrequency(days) {
+      let d = parseInt(days, 10);
+      if (isNaN(d)) return days;
+      let months = Math.floor(d / 30);
+      let remainder = d % 30;
+      // If there's at least one month and remainder is 0, default to 15 days.
+      if (months > 0 && remainder === 0) {
+        remainder = 15;
+      }
+      return `${months} month${months === 1 ? '' : 's'} ${remainder} day${remainder === 1 ? '' : 's'}`;
+    }
+
     // Global reminders state shared by both views.
     // Each reminder includes an array of time slots,
     // where each time slot is an object:
@@ -200,21 +213,6 @@
       return h * 60 + m;
     }
 
-    // Helper: format delay in minutes to a human-friendly string.
-    function formatDelay(delayMinutes) {
-      if (delayMinutes < 60) {
-        return `${delayMinutes} minute${delayMinutes === 1 ? '' : 's'} after`;
-      } else {
-        const hours = Math.floor(delayMinutes / 60);
-        const minutes = delayMinutes % 60;
-        let result = `${hours} hour${hours === 1 ? '' : 's'}`;
-        if (minutes > 0) {
-          result += ` ${minutes} minute${minutes === 1 ? '' : 's'}`;
-        }
-        return result + " after";
-      }
-    }
-
     // Caregiver: handle form submission to set a new reminder
     caregiverForm.addEventListener('submit', function(e) {
       e.preventDefault();
@@ -304,6 +302,8 @@
         caregiverRemindersDiv.innerHTML = '<p class="text-gray-500">No reminders set yet.</p>';
       } else {
         caregiverRemindersDiv.innerHTML = reminders.map(reminder => {
+          // Format frequency if not lifetime.
+          const frequencyText = reminder.frequency === "Life" ? "Lifetime" : formatFrequency(reminder.frequency);
           const timeSlotsHTML = reminder.timeSlots.map(slot => `
             <li>${slot.start} - ${slot.end} (<span class="font-semibold">${slot.status}</span>)</li>
           `).join('');
@@ -311,7 +311,7 @@
             <div class="border p-4 rounded mb-4 shadow-sm">
               <h3 class="text-xl font-bold text-gray-800">${reminder.medicineName}</h3>
               <p class="text-gray-600">Pills per Dose: ${reminder.pillCount}</p>
-              <p class="text-gray-600">Frequency: ${reminder.frequency === "Life" ? "Lifetime" : reminder.frequency + " day(s)"}</p>
+              <p class="text-gray-600">Frequency: ${frequencyText}</p>
               <ul class="list-disc list-inside text-gray-600">
                 ${timeSlotsHTML}
               </ul>
