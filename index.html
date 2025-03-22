@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Eldora - Medicine Reminder</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 font-sans">
+  <!-- Navigation Tabs -->
+  <nav class="bg-blue-600 p-4">
+    <div class="max-w-4xl mx-auto flex justify-center space-x-4">
+      <button id="caregiverTab" class="text-white font-semibold px-4 py-2 rounded bg-blue-700">Caregiver</button>
+      <button id="elderTab" class="text-white font-semibold px-4 py-2 rounded hover:bg-blue-500">Elder</button>
+    </div>
+  </nav>
+
+  <div class="max-w-4xl mx-auto p-6">
+    <!-- Caregiver View -->
+    <section id="caregiverView" class="mt-6">
+      <header class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-800 text-center">
+          Eldora - Caregiver Dashboard
+        </h1>
+      </header>
+      <!-- Medicine Reminder Form -->
+      <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+        <h2 class="text-2xl font-semibold text-gray-700 mb-4">
+          Set Medicine Reminder
+        </h2>
+        <form id="medicineForm" class="space-y-4">
+          <!-- Medicine Name -->
+          <div>
+            <label for="medicineName" class="block text-gray-600 font-medium">
+              Medicine Name
+            </label>
+            <input type="text" id="medicineName" name="medicineName" placeholder="e.g. Paracetamol 500 mg" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+          </div>
+          <!-- Dosage -->
+          <div>
+            <label for="dosage" class="block text-gray-600 font-medium">
+              Dosage
+            </label>
+            <input type="text" id="dosage" name="dosage" placeholder="e.g. 500 mg" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+          </div>
+          <!-- Frequency -->
+          <div>
+            <label for="frequency" class="block text-gray-600 font-medium">
+              Frequency (Days)
+            </label>
+            <input type="number" id="frequency" name="frequency" min="1" max="30" value="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+          </div>
+          <!-- Timing: Morning -->
+          <div>
+            <label class="block text-gray-600 font-medium">
+              Morning Time Slot
+            </label>
+            <div class="flex space-x-2 mt-1">
+              <input type="time" id="morningStart" name="morningStart" class="block rounded-md border-gray-300 shadow-sm" />
+              <span class="self-center">to</span>
+              <input type="time" id="morningEnd" name="morningEnd" class="block rounded-md border-gray-300 shadow-sm" />
+            </div>
+          </div>
+          <!-- Timing: After Dinner -->
+          <div>
+            <label class="block text-gray-600 font-medium">
+              After Dinner Time Slot
+            </label>
+            <div class="flex space-x-2 mt-1">
+              <input type="time" id="dinnerStart" name="dinnerStart" class="block rounded-md border-gray-300 shadow-sm" />
+              <span class="self-center">to</span>
+              <input type="time" id="dinnerEnd" name="dinnerEnd" class="block rounded-md border-gray-300 shadow-sm" />
+            </div>
+          </div>
+          <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+            Set Reminder
+          </button>
+        </form>
+      </div>
+      <!-- List of Active Reminders for Caregiver -->
+      <div class="bg-white p-6 rounded-lg shadow-md">
+        <h2 class="text-2xl font-semibold text-gray-700 mb-4">
+          Active Medicine Reminders
+        </h2>
+        <div id="caregiverReminders">
+          <p class="text-gray-500">No reminders set yet.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Elder View -->
+    <section id="elderView" class="mt-6 hidden">
+      <header class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-800 text-center">
+          Eldora - Elder Dashboard
+        </h1>
+      </header>
+      <!-- Reminders Notification List for Elder -->
+      <div class="bg-white p-6 rounded-lg shadow-md">
+        <h2 class="text-2xl font-semibold text-gray-700 mb-4">
+          Your Medicine Reminders
+        </h2>
+        <div id="elderReminders">
+          <p class="text-gray-500">No reminders available at the moment.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    // Global reminders state shared by both views
+    let reminders = [];
+
+    // DOM elements for both views
+    const caregiverForm = document.getElementById('medicineForm');
+    const caregiverRemindersDiv = document.getElementById('caregiverReminders');
+    const elderRemindersDiv = document.getElementById('elderReminders');
+
+    // Tab navigation elements
+    const caregiverTab = document.getElementById('caregiverTab');
+    const elderTab = document.getElementById('elderTab');
+    const caregiverView = document.getElementById('caregiverView');
+    const elderView = document.getElementById('elderView');
+
+    // Tab switching logic
+    caregiverTab.addEventListener('click', () => {
+      caregiverView.classList.remove('hidden');
+      elderView.classList.add('hidden');
+      caregiverTab.classList.add('bg-blue-700');
+      elderTab.classList.remove('bg-blue-700');
+    });
+
+    elderTab.addEventListener('click', () => {
+      elderView.classList.remove('hidden');
+      caregiverView.classList.add('hidden');
+      elderTab.classList.add('bg-blue-700');
+      caregiverTab.classList.remove('bg-blue-700');
+    });
+
+    // Caregiver: handle form submission to set a new reminder
+    caregiverForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      // Gather form data
+      const medicineName = document.getElementById('medicineName').value;
+      const dosage = document.getElementById('dosage').value;
+      const frequency = document.getElementById('frequency').value;
+      const morningStart = document.getElementById('morningStart').value;
+      const morningEnd = document.getElementById('morningEnd').value;
+      const dinnerStart = document.getElementById('dinnerStart').value;
+      const dinnerEnd = document.getElementById('dinnerEnd').value;
+
+      // Validate input
+      if (!medicineName || !dosage || !frequency || !morningStart || !morningEnd || !dinnerStart || !dinnerEnd) {
+        alert("Please fill in all fields.");
+        return;
+      }
+
+      // Create reminder object with a unique id and default status "pending"
+      const reminder = {
+        id: Date.now(),
+        medicineName,
+        dosage,
+        frequency,
+        morning: { start: morningStart, end: morningEnd },
+        dinner: { start: dinnerStart, end: dinnerEnd },
+        status: "pending" // statuses: pending, taken, missed
+      };
+
+      reminders.push(reminder);
+      updateViews();
+      caregiverForm.reset();
+
+      // For demo: simulate time-check for a missed dose after 10 seconds.
+      setTimeout(() => {
+        // Only mark as missed if still pending.
+        if (reminder.status === "pending") {
+          reminder.status = "missed";
+          // Alert caregiver (in real app, this would be a push notification)
+          alert(`Alert for Caregiver: Medicine missed - ${reminder.medicineName}`);
+          updateViews();
+        }
+      }, 10000);
+    });
+
+    // Update both caregiver and elder views based on reminders state
+    function updateViews() {
+      // Caregiver view: display reminder details without action buttons
+      if (reminders.length === 0) {
+        caregiverRemindersDiv.innerHTML = '<p class="text-gray-500">No reminders set yet.</p>';
+      } else {
+        caregiverRemindersDiv.innerHTML = reminders.map(reminder => {
+          return `
+            <div class="border p-4 rounded mb-4 shadow-sm">
+              <h3 class="text-xl font-bold text-gray-800">${reminder.medicineName}</h3>
+              <p class="text-gray-600">Dosage: ${reminder.dosage}</p>
+              <p class="text-gray-600">Frequency: ${reminder.frequency} day(s)</p>
+              <p class="text-gray-600">Morning: ${reminder.morning.start} - ${reminder.morning.end}</p>
+              <p class="text-gray-600">After Dinner: ${reminder.dinner.start} - ${reminder.dinner.end}</p>
+              <p class="text-sm text-gray-500">Status: ${reminder.status}</p>
+            </div>
+          `;
+        }).join('');
+      }
+
+      // Elder view: display reminders with action buttons if pending
+      if (reminders.length === 0) {
+        elderRemindersDiv.innerHTML = '<p class="text-gray-500">No reminders available at the moment.</p>';
+      } else {
+        elderRemindersDiv.innerHTML = reminders.map(reminder => {
+          // Only show action buttons if the reminder is pending
+          let actions = '';
+          if (reminder.status === "pending") {
+            actions = `
+              <div class="mt-2 space-x-2">
+                <button class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600" onclick="markTaken(${reminder.id})">
+                  Taken
+                </button>
+                <button class="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600" onclick="markNotYet(${reminder.id})">
+                  Not Yet
+                </button>
+              </div>
+            `;
+          }
+          return `
+            <div class="border p-4 rounded mb-4 shadow-sm">
+              <h3 class="text-xl font-bold text-gray-800">${reminder.medicineName}</h3>
+              <p class="text-gray-600">Dosage: ${reminder.dosage}</p>
+              <p class="text-gray-600">Time Slots: Morning (${reminder.morning.start} - ${reminder.morning.end}), After Dinner (${reminder.dinner.start} - ${reminder.dinner.end})</p>
+              <p class="text-sm text-gray-500">Status: ${reminder.status}</p>
+              ${actions}
+            </div>
+          `;
+        }).join('');
+      }
+    }
+
+    // Elder actions: mark medicine as taken
+    function markTaken(id) {
+      reminders = reminders.map(reminder => {
+        if (reminder.id === id) {
+          reminder.status = "taken";
+        }
+        return reminder;
+      });
+      updateViews();
+    }
+
+    // Elder actions: mark medicine as still pending (not taken yet)
+    function markNotYet(id) {
+      reminders = reminders.map(reminder => {
+        if (reminder.id === id) {
+          reminder.status = "pending";
+        }
+        return reminder;
+      });
+      updateViews();
+    }
+
+    // Expose the elder actions to global scope
+    window.markTaken = markTaken;
+    window.markNotYet = markNotYet;
+  </script>
+</body>
+</html>
