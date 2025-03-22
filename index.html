@@ -112,7 +112,7 @@
     // Global reminders state shared by both views.
     // Each reminder includes an array of time slots,
     // where each time slot is an object:
-    // { start, end, status, alarmTimes: [a1,a2,a3], alarmsTriggered: [bool, bool, bool] }
+    // { start, end, status, alarmTimes: [a1, a2, a3], alarmsTriggered: [bool, bool, bool] }
     let reminders = [];
 
     // DOM elements for both views
@@ -326,7 +326,8 @@
         elderRemindersDiv.innerHTML = reminders.map(reminder => {
           const timeSlotsHTML = reminder.timeSlots.map((slot, idx) => {
             let actions = "";
-            if (slot.status === "pending" || slot.status === "missed" || slot.status.startsWith("taken medicine post time slot")) {
+            // Show the button only if the slot is pending or missed.
+            if (slot.status === "pending" || slot.status === "missed") {
               actions = `<button class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600" onclick="markTaken(${reminder.id}, ${idx})">
                            Mark as Taken
                          </button>`;
@@ -353,7 +354,10 @@
       reminders = reminders.map(reminder => {
         if (reminder.id === reminderId) {
           const slot = reminder.timeSlots[timeslotIndex];
-          if (slot.status === "missed") {
+          // Only update if the slot is pending or missed.
+          if (slot.status === "pending") {
+            slot.status = "taken";
+          } else if (slot.status === "missed") {
             // Calculate delay since the end of the time slot.
             const now = new Date();
             const currentMinutes = now.getHours() * 60 + now.getMinutes();
@@ -361,8 +365,6 @@
             const delayMinutes = currentMinutes - slotEndMinutes;
             const delayString = formatDelay(delayMinutes);
             slot.status = `taken medicine post time slot (${delayString})`;
-          } else {
-            slot.status = "taken";
           }
         }
         return reminder;
