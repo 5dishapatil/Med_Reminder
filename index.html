@@ -34,43 +34,39 @@
             <label for="medicineName" class="block text-gray-600 font-medium">
               Medicine Name
             </label>
-            <input type="text" id="medicineName" name="medicineName" placeholder="e.g. Paracetamol" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+            <input type="text" id="medicineName" name="medicineName" placeholder="e.g. Paracetamol" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required />
           </div>
           <!-- Number of Pills -->
           <div>
             <label for="pillCount" class="block text-gray-600 font-medium">
               Number of Pills
             </label>
-            <input type="number" id="pillCount" name="pillCount" placeholder="e.g. 2 pills" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" min="1" />
+            <input type="number" id="pillCount" name="pillCount" placeholder="e.g. 2 pills" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" min="1" required />
           </div>
           <!-- Frequency -->
           <div>
             <label for="frequency" class="block text-gray-600 font-medium">
               Frequency (Days)
             </label>
-            <input type="number" id="frequency" name="frequency" min="1" max="30" value="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+            <input type="number" id="frequency" name="frequency" min="1" max="30" value="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required />
           </div>
-          <!-- Timing: Morning -->
+          <!-- Time Slots Section -->
           <div>
-            <label class="block text-gray-600 font-medium">
-              Morning Time Slot
+            <label class="block text-gray-600 font-medium mb-2">
+              Set Alarm Time(s)
             </label>
-            <div class="flex space-x-2 mt-1">
-              <input type="time" id="morningStart" name="morningStart" class="block rounded-md border-gray-300 shadow-sm" />
-              <span class="self-center">to</span>
-              <input type="time" id="morningEnd" name="morningEnd" class="block rounded-md border-gray-300 shadow-sm" />
+            <div id="timeSlots" class="space-y-2">
+              <!-- A default time slot is added automatically -->
+              <div class="flex space-x-2 items-center time-slot">
+                <input type="time" class="startTime rounded-md border-gray-300 shadow-sm" required />
+                <span class="self-center">to</span>
+                <input type="time" class="endTime rounded-md border-gray-300 shadow-sm" required />
+                <button type="button" class="removeTimeSlot bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">Remove</button>
+              </div>
             </div>
-          </div>
-          <!-- Timing: After Dinner -->
-          <div>
-            <label class="block text-gray-600 font-medium">
-              After Dinner Time Slot
-            </label>
-            <div class="flex space-x-2 mt-1">
-              <input type="time" id="dinnerStart" name="dinnerStart" class="block rounded-md border-gray-300 shadow-sm" />
-              <span class="self-center">to</span>
-              <input type="time" id="dinnerEnd" name="dinnerEnd" class="block rounded-md border-gray-300 shadow-sm" />
-            </div>
+            <button type="button" id="addTimeSlot" class="mt-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+              Add Time Slot
+            </button>
           </div>
           <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
             Set Reminder
@@ -137,6 +133,48 @@
       caregiverTab.classList.remove('bg-blue-700');
     });
 
+    // Dynamic Time Slot Addition
+    const timeSlotsDiv = document.getElementById('timeSlots');
+    const addTimeSlotBtn = document.getElementById('addTimeSlot');
+
+    // Function to add a new time slot block
+    function addTimeSlot() {
+      const timeSlotDiv = document.createElement('div');
+      timeSlotDiv.classList.add('flex', 'space-x-2', 'items-center', 'time-slot');
+
+      const startInput = document.createElement('input');
+      startInput.type = 'time';
+      startInput.required = true;
+      startInput.className = 'startTime rounded-md border-gray-300 shadow-sm';
+
+      const span = document.createElement('span');
+      span.textContent = "to";
+      span.classList.add('self-center');
+
+      const endInput = document.createElement('input');
+      endInput.type = 'time';
+      endInput.required = true;
+      endInput.className = 'endTime rounded-md border-gray-300 shadow-sm';
+
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.textContent = "Remove";
+      removeBtn.className = 'removeTimeSlot bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600';
+      removeBtn.addEventListener('click', () => {
+        timeSlotsDiv.removeChild(timeSlotDiv);
+      });
+
+      timeSlotDiv.appendChild(startInput);
+      timeSlotDiv.appendChild(span);
+      timeSlotDiv.appendChild(endInput);
+      timeSlotDiv.appendChild(removeBtn);
+
+      timeSlotsDiv.appendChild(timeSlotDiv);
+    }
+
+    // Attach event for "Add Time Slot" button
+    addTimeSlotBtn.addEventListener('click', addTimeSlot);
+
     // Caregiver: handle form submission to set a new reminder
     caregiverForm.addEventListener('submit', function(e) {
       e.preventDefault();
@@ -145,15 +183,18 @@
       const medicineName = document.getElementById('medicineName').value;
       const pillCount = document.getElementById('pillCount').value;
       const frequency = document.getElementById('frequency').value;
-      const morningStart = document.getElementById('morningStart').value;
-      const morningEnd = document.getElementById('morningEnd').value;
-      const dinnerStart = document.getElementById('dinnerStart').value;
-      const dinnerEnd = document.getElementById('dinnerEnd').value;
-
-      // Validate input
-      if (!medicineName || !pillCount || !frequency || !morningStart || !morningEnd || !dinnerStart || !dinnerEnd) {
-        alert("Please fill in all fields.");
-        return;
+      
+      // Gather all time slots from the dynamic container
+      const timeSlotElements = document.querySelectorAll('.time-slot');
+      let timeSlots = [];
+      for (const slot of timeSlotElements) {
+        const start = slot.querySelector('.startTime').value;
+        const end = slot.querySelector('.endTime').value;
+        if (!start || !end) {
+          alert("Please fill in all time slot fields.");
+          return;
+        }
+        timeSlots.push({ start, end });
       }
 
       // Create reminder object with a unique id and default status "pending"
@@ -162,8 +203,7 @@
         medicineName,
         pillCount,
         frequency,
-        morning: { start: morningStart, end: morningEnd },
-        dinner: { start: dinnerStart, end: dinnerEnd },
+        timeSlots, // array of {start, end}
         status: "pending" // statuses: pending, taken, missed
       };
 
@@ -171,12 +211,16 @@
       updateViews();
       caregiverForm.reset();
 
-      // For demo: simulate time-check for a missed dose after 10 seconds.
+      // Clear dynamic time slots and add one default slot back
+      timeSlotsDiv.innerHTML = "";
+      addTimeSlot();
+
+      // For demo: simulate a check for a missed dose after 10 seconds.
       setTimeout(() => {
         // Only mark as missed if still pending.
         if (reminder.status === "pending") {
           reminder.status = "missed";
-          // Alert caregiver (in real app, this would be a push notification)
+          // Alert caregiver (in a real app, this could be a push notification)
           alert(`Alert for Caregiver: Medicine missed - ${reminder.medicineName}`);
           updateViews();
         }
@@ -190,13 +234,16 @@
         caregiverRemindersDiv.innerHTML = '<p class="text-gray-500">No reminders set yet.</p>';
       } else {
         caregiverRemindersDiv.innerHTML = reminders.map(reminder => {
+          // Build a list of time slots display
+          const timeSlotsHTML = reminder.timeSlots.map(slot => `<li>${slot.start} - ${slot.end}</li>`).join('');
           return `
             <div class="border p-4 rounded mb-4 shadow-sm">
               <h3 class="text-xl font-bold text-gray-800">${reminder.medicineName}</h3>
               <p class="text-gray-600">Number of Pills: ${reminder.pillCount}</p>
               <p class="text-gray-600">Frequency: ${reminder.frequency} day(s)</p>
-              <p class="text-gray-600">Morning: ${reminder.morning.start} - ${reminder.morning.end}</p>
-              <p class="text-gray-600">After Dinner: ${reminder.dinner.start} - ${reminder.dinner.end}</p>
+              <ul class="list-disc list-inside text-gray-600">
+                ${timeSlotsHTML}
+              </ul>
               <p class="text-sm text-gray-500">Status: ${reminder.status}</p>
             </div>
           `;
@@ -208,7 +255,7 @@
         elderRemindersDiv.innerHTML = '<p class="text-gray-500">No reminders available at the moment.</p>';
       } else {
         elderRemindersDiv.innerHTML = reminders.map(reminder => {
-          // Only show action buttons if the reminder is pending
+          const timeSlotsHTML = reminder.timeSlots.map(slot => `<li>${slot.start} - ${slot.end}</li>`).join('');
           let actions = '';
           if (reminder.status === "pending") {
             actions = `
@@ -226,7 +273,9 @@
             <div class="border p-4 rounded mb-4 shadow-sm">
               <h3 class="text-xl font-bold text-gray-800">${reminder.medicineName}</h3>
               <p class="text-gray-600">Number of Pills: ${reminder.pillCount}</p>
-              <p class="text-gray-600">Time Slots: Morning (${reminder.morning.start} - ${reminder.morning.end}), After Dinner (${reminder.dinner.start} - ${reminder.dinner.end})</p>
+              <ul class="list-disc list-inside text-gray-600">
+                ${timeSlotsHTML}
+              </ul>
               <p class="text-sm text-gray-500">Status: ${reminder.status}</p>
               ${actions}
             </div>
@@ -257,9 +306,12 @@
       updateViews();
     }
 
-    // Expose the elder actions to global scope
+    // Expose elder actions to global scope
     window.markTaken = markTaken;
     window.markNotYet = markNotYet;
+
+    // Add one default time slot on page load
+    addTimeSlot();
   </script>
 </body>
 </html>
