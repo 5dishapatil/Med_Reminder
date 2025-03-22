@@ -218,7 +218,6 @@
           alert("Please fill in all time slot fields.");
           return;
         }
-        // Compute start and end in minutes
         const startM = timeToMinutes(start);
         const endM = timeToMinutes(end);
         let duration = endM - startM;
@@ -226,27 +225,23 @@
           alert("End time must be after start time.");
           return;
         }
-        // Calculate alarm interval so that there are 3 alarms in the slot.
         let interval = Math.floor(duration / 3);
-        if (interval <= 0) interval = 1; // at least 1 minute interval
-        // Alarm times (in minutes from midnight)
+        if (interval <= 0) interval = 1;
         const alarmTimes = [
           startM + interval,
           startM + interval * 2,
-          endM // final alarm at the end time
+          endM
         ];
-        // Initialize alarmsTriggered array for each alarm.
         const alarmsTriggered = [false, false, false];
         timeSlots.push({ start, end, status: "pending", alarmTimes, alarmsTriggered });
       }
 
-      // Create reminder object.
       const reminder = {
         id: Date.now(),
         medicineName,
         pillCount,
         frequency,
-        timeSlots, // each has alarmTimes and alarmsTriggered
+        timeSlots,
       };
 
       reminders.push(reminder);
@@ -264,17 +259,13 @@
       const currentMinutes = now.getHours() * 60 + now.getMinutes();
       reminders.forEach(reminder => {
         reminder.timeSlots.forEach(slot => {
-          // Only check if the medicine for this slot hasn't been logged as taken.
           if (slot.status === "pending") {
-            // Check each alarm time.
             slot.alarmTimes.forEach((alarmTime, index) => {
               if (!slot.alarmsTriggered[index] && currentMinutes >= alarmTime) {
-                // Trigger an alarm reminder for the elder.
                 alert(`Reminder for Elder: Time to take ${reminder.medicineName} (${slot.start} - ${slot.end}) [Alarm ${index+1}]`);
                 slot.alarmsTriggered[index] = true;
               }
             });
-            // If current time is past the slot's end time and still pending, mark as missed.
             if (currentMinutes >= timeToMinutes(slot.end)) {
               slot.status = "missed";
               alert(`Alert for Caregiver: Medicine "${reminder.medicineName}" missed for time slot ${slot.start} - ${slot.end}`);
@@ -314,7 +305,7 @@
         elderRemindersDiv.innerHTML = reminders.map(reminder => {
           const timeSlotsHTML = reminder.timeSlots.map((slot, idx) => {
             let actions = "";
-            if (slot.status === "pending" || slot.status === "missed") {
+            if (slot.status === "pending" || slot.status === "missed" || slot.status === "taken medicine post time slot") {
               actions = `<button class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600" onclick="markTaken(${reminder.id}, ${idx})">
                            Mark as Taken
                          </button>`;
@@ -340,17 +331,20 @@
     function markTaken(reminderId, timeslotIndex) {
       reminders = reminders.map(reminder => {
         if (reminder.id === reminderId) {
-          reminder.timeSlots[timeslotIndex].status = "taken";
+          const currentStatus = reminder.timeSlots[timeslotIndex].status;
+          // If the slot was already missed, mark it as "taken medicine post time slot"
+          if (currentStatus === "missed") {
+            reminder.timeSlots[timeslotIndex].status = "taken medicine post time slot";
+          } else {
+            reminder.timeSlots[timeslotIndex].status = "taken";
+          }
         }
         return reminder;
       });
       updateViews();
     }
 
-    // Expose the elder action globally.
     window.markTaken = markTaken;
-
-    // Add one default time slot on page load.
     addTimeSlot();
   </script>
 </body>
